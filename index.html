@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>کتابخانه مدرسه</title>
+  <style>
+    body {
+      font-family: "B Nazanin", "IRANSans", sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2196F3;
+      color: white;
+      text-align: center;
+      padding: 1.2rem;
+      font-size: 1.6rem;
+    }
+    .tabs {
+      text-align: center;
+      padding: 1rem;
+      background-color: #e3f2fd;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .tabs button {
+      margin: 0 5px;
+      padding: 8px 15px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #bbdefb;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: inline-block;
+    }
+    .tabs button:hover {
+      background-color: #90caf9;
+    }
+    .tabs button.active {
+      background-color: #2196F3;
+      color: white;
+      font-weight: bold;
+    }
+
+    .search-box {
+      text-align: center;
+      padding: 1rem;
+      background-color: #e3f2fd;
+    }
+    .search-box input {
+      width: 80%;
+      max-width: 500px;
+      padding: 10px 15px;
+      font-size: 1.1rem;
+      border: 1px solid #90caf9;
+      border-radius: 6px;
+      outline: none;
+      direction: rtl;
+    }
+
+    .books-list {
+      padding: 1.5rem;
+    }
+    .books-list ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .books-list li {
+      background: white;
+      margin: 0.5rem 0;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .hidden {
+      display: none;
+    }
+    
+    .admin-link {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      background-color: #e0e0e0;
+      color: #666;
+      font-size: 0.85rem;
+      padding: 6px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+    .admin-link:hover {
+      opacity: 1 !important;
+    }
+    
+    .no-result {
+      text-align: center;
+      color: #888;
+      padding: 1.5rem;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    سلام دانش‌آموزان عزیز
+  </header>
+
+  <div class="tabs" id="tabs-container">
+    <!-- تب‌ها به صورت داینامیک اینجا اضافه می‌شوند -->
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="نام کتاب را جستجو کنید..." oninput="filterBooks()" />
+  </div>
+
+  <div class="books-list">
+    <ul id="bookList"></ul>
+  </div>
+
+  <!-- لینک ورود ادمین -->
+  <a href="admin-login.html" class="admin-link">
+    ورود ادمین
+  </a>
+
+  <script>
+    // کلید مشترک برای دسترسی به داده‌های ذخیره‌شده توسط پنل ادمین
+    const STORAGE_KEY = 'schoolLibraryData';
+
+    // متغیرهای جهانی
+    let libraryData = { shelves: [], books: [] };
+    let currentView = 'all'; // 'all', 'h1', یا id قفسه
+
+    // بارگذاری داده‌ها از localStorage
+    function loadLibraryData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.warn('داده‌های ذخیره‌شده آسیب دیده‌اند.');
+        }
+      }
+      // داده‌های پیش‌فرض
+      return {
+        shelves: [
+          { id: 1, name: "همه کتاب‌ها", isDefault: true },
+          { id: 2, name: "داستان" },
+          { id: 3, name: "علمی" },
+          { id: 4, name: "شاعری" }
+        ],
+        books: [
+          { id: 1, title: "تاتار", category: "h1", shelfId: 2 },
+          { id: 2, title: "شاهنامه", category: "all", shelfId: 4 },
+          { id: 3, title: "گلستان", category: "all", shelfId: 4 },
+          { id: 4, title: "ماجراهای گربه سیاه", category: "all", shelfId: 2 },
+          { id: 5, title: "دن کیشوت", category: "all", shelfId: 2 },
+          { id: 6, title: "کلیله و دمنه", category: "all", shelfId: 2 },
+          { id: 7, title: "سفر به مرکز زمین", category: "all", shelfId: 3 }
+        ]
+      };
+    }
+
+    // رندر تب‌ها
+    function renderTabs() {
+      const tabsContainer = document.getElementById('tabs-container');
+      tabsContainer.innerHTML = '';
+      
+      // اولین تب: همه
+      const allBtn = document.createElement('button');
+      allBtn.textContent = 'همه';
+      allBtn.className = currentView === 'all' ? 'active' : '';
+      allBtn.onclick = () => switchView('all');
+      tabsContainer.appendChild(allBtn);
+
+      // دومین تب: H1
+      const h1Btn = document.createElement('button');
+      h1Btn.textContent = 'H1';
+      h1Btn.className = currentView === 'h1' ? 'active' : '';
+      h1Btn.onclick = () => switchView('h1');
+      tabsContainer.appendChild(h1Btn);
+
+      // تب‌های قفسه‌ها (از داده‌های ذخیره‌شده)
+      libraryData.shelves.forEach(shelf => {
+        // قفسه پیش‌فرض را نمایش نده (چون "همه" وجود دارد)
+        if (shelf.isDefault) return;
+
+        const shelfBtn = document.createElement('button');
+        shelfBtn.textContent = shelf.name;
+        shelfBtn.className = currentView === shelf.id ? 'active' : '';
+        shelfBtn.onclick = () => switchView(shelf.id);
+        tabsContainer.appendChild(shelfBtn);
+      });
+    }
+
+    // تغییر نمایش (همه / H1 / قفسه خاص)
+    function switchView(view) {
+      currentView = view;
+      renderTabs();
+      filterBooks();
+    }
+
+    // فیلتر و نمایش کتاب‌ها
+    function filterBooks() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const bookListEl = document.getElementById('bookList');
+      bookListEl.innerHTML = '';
+
+      let filteredBooks = [];
+
+      if (currentView === 'all') {
+        // همه کتاب‌ها
+        filteredBooks = libraryData.books;
+      } else if (currentView === 'h1') {
+        // فقط کتاب‌های H1
+        filteredBooks = libraryData.books.filter(book => book.category === 'h1');
+      } else {
+        // کتاب‌های قفسه خاص (عددی)
+        const shelfId = parseInt(currentView);
+        filteredBooks = libraryData.books.filter(book => book.shelfId === shelfId);
+      }
+
+      // فیلتر بر اساس جستجو
+      if (query) {
+        filteredBooks = filteredBooks.filter(book => 
+          book.title.toLowerCase().includes(query)
+        );
+      }
+
+      // نمایش نتایج
+      if (filteredBooks.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'no-result';
+        li.textContent = 'کتابی یافت نشد.';
+        bookListEl.appendChild(li);
+      } else {
+        filteredBooks.forEach(book => {
+          const li = document.createElement('li');
+          li.textContent = book.title;
+          bookListEl.appendChild(li);
+        });
+      }
+    }
+
+    // بارگذاری مجدد داده‌ها از localStorage
+    function reloadFromStorage() {
+      libraryData = loadLibraryData();
+      renderTabs();
+      filterBooks();
+    }
+
+    // راه‌اندازی اولیه
+    window.onload = function() {
+      libraryData = loadLibraryData();
+      renderTabs();
+      filterBooks();
+      
+      // به‌روزرسانی خودکار هر 2 ثانیه
+      setInterval(reloadFromStorage, 2000);
+    };
+  </script>
+
+</body>
+</html>

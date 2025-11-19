@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ورود ادمین - کتابخانه مدرسه</title>
+  <style>
+    body {
+      font-family: "B Nazanin", "IRANSans", sans-serif;
+      background-color: #e3f2fd;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-box h2 {
+      color: #1565c0;
+      margin-bottom: 1.5rem;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #90caf9;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      direction: ltr;
+      text-align: left;
+    }
+    .login-box input::placeholder {
+      direction: rtl;
+      text-align: right;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .login-box button:hover {
+      background-color: #1976d2;
+    }
+    .error {
+      color: #d32f2f;
+      margin-top: 10px;
+      font-size: 1rem;
+      min-height: 1.5em;
+    }
+    a.back {
+      display: block;
+      margin-top: 1.5rem;
+      color: #1565c0;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <h2>ورود ادمین</h2>
+    <form id="loginForm">
+      <input type="text" id="username" name="username" placeholder="نام کاربری" required />
+      <input type="password" id="password" name="password" placeholder="رمز عبور" required />
+      <div class="error" id="error-message"></div>
+      <button type="submit">ورود</button>
+    </form>
+    <a href="index.html" class="back">بازگشت به صفحه اصلی</a>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorMsg = document.getElementById('error-message');
+
+      if (username === 'aran' && password === 'aran') {
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        window.location.href = 'admin-panel.html';
+      } else {
+        errorMsg.textContent = 'نام کاربری یا رمز عبور اشتباه است!';
+        setTimeout(() => {
+          errorMsg.textContent = '';
+        }, 3000);
+      }
+    });
+  </script>
+
+</body>
+</html>
